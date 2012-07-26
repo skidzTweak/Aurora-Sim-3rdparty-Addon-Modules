@@ -1,5 +1,0 @@
-D:\skidztweak\Aurora-Sim\addon-modules\Warp3D\Modules\obj\Debug\ResolveAssemblyReference.cache
-D:\skidztweak\Aurora-Sim\bin\Warp3D.dll
-D:\skidztweak\Aurora-Sim\bin\Warp3D.pdb
-D:\skidztweak\Aurora-Sim\addon-modules\Warp3D\Modules\obj\Debug\Warp3D.dll
-D:\skidztweak\Aurora-Sim\addon-modules\Warp3D\Modules\obj\Debug\Warp3D.pdb

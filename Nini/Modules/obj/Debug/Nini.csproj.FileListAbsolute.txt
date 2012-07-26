@@ -1,5 +1,0 @@
-D:\skidztweak\Aurora-Sim\addon-modules\Nini\Modules\obj\Debug\ResolveAssemblyReference.cache
-D:\skidztweak\Aurora-Sim\bin\Nini.dll
-D:\skidztweak\Aurora-Sim\bin\Nini.pdb
-D:\skidztweak\Aurora-Sim\addon-modules\Nini\Modules\obj\Debug\Nini.dll
-D:\skidztweak\Aurora-Sim\addon-modules\Nini\Modules\obj\Debug\Nini.pdb

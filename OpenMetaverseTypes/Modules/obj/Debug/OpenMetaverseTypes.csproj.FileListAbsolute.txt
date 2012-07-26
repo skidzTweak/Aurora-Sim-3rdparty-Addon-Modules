@@ -1,5 +1,0 @@
-D:\skidztweak\Aurora-Sim\bin\OpenMetaverseTypes.dll
-D:\skidztweak\Aurora-Sim\bin\OpenMetaverseTypes.pdb
-D:\skidztweak\Aurora-Sim\addon-modules\OpenMetaverseTypes\Modules\obj\Debug\ResolveAssemblyReference.cache
-D:\skidztweak\Aurora-Sim\addon-modules\OpenMetaverseTypes\Modules\obj\Debug\OpenMetaverseTypes.dll
-D:\skidztweak\Aurora-Sim\addon-modules\OpenMetaverseTypes\Modules\obj\Debug\OpenMetaverseTypes.pdb

@@ -1,5 +1,0 @@
-D:\skidztweak\Aurora-Sim\bin\XMLRPC.dll
-D:\skidztweak\Aurora-Sim\bin\XMLRPC.pdb
-D:\skidztweak\Aurora-Sim\addon-modules\Nwc.XmlRpc\Modules\obj\Debug\ResolveAssemblyReference.cache
-D:\skidztweak\Aurora-Sim\addon-modules\Nwc.XmlRpc\Modules\obj\Debug\XMLRPC.dll
-D:\skidztweak\Aurora-Sim\addon-modules\Nwc.XmlRpc\Modules\obj\Debug\XMLRPC.pdb
