@@ -1,0 +1,5 @@
+D:\skidztweak\Aurora-Sim\addon-modules\Newtonsoft.Json\Modules\obj\Debug\ResolveAssemblyReference.cache
+D:\skidztweak\Aurora-Sim\bin\Newtonsoft.Json.dll
+D:\skidztweak\Aurora-Sim\bin\Newtonsoft.Json.pdb
+D:\skidztweak\Aurora-Sim\addon-modules\Newtonsoft.Json\Modules\obj\Debug\Newtonsoft.Json.dll
+D:\skidztweak\Aurora-Sim\addon-modules\Newtonsoft.Json\Modules\obj\Debug\Newtonsoft.Json.pdb

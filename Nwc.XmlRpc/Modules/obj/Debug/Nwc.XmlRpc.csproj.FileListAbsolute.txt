@@ -1,0 +1,5 @@
+D:\skidztweak\Aurora-Sim\bin\Nwc.XmlRpc.dll
+D:\skidztweak\Aurora-Sim\bin\Nwc.XmlRpc.pdb
+D:\skidztweak\Aurora-Sim\addon-modules\Nwc.XmlRpc\Modules\obj\Debug\ResolveAssemblyReference.cache
+D:\skidztweak\Aurora-Sim\addon-modules\Nwc.XmlRpc\Modules\obj\Debug\Nwc.XmlRpc.dll
+D:\skidztweak\Aurora-Sim\addon-modules\Nwc.XmlRpc\Modules\obj\Debug\Nwc.XmlRpc.pdb

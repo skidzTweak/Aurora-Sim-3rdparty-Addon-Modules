@@ -1,0 +1,5 @@
+D:\skidztweak\Aurora-Sim\bin\CSJ2K.dll
+D:\skidztweak\Aurora-Sim\bin\CSJ2K.pdb
+D:\skidztweak\Aurora-Sim\addon-modules\CSJ2K\Modules\obj\Debug\ResolveAssemblyReference.cache
+D:\skidztweak\Aurora-Sim\addon-modules\CSJ2K\Modules\obj\Debug\CSJ2K.dll
+D:\skidztweak\Aurora-Sim\addon-modules\CSJ2K\Modules\obj\Debug\CSJ2K.pdb

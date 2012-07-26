@@ -1,0 +1,5 @@
+D:\skidztweak\Aurora-Sim\bin\GlynnTucker.Cache.dll
+D:\skidztweak\Aurora-Sim\bin\GlynnTucker.Cache.pdb
+D:\skidztweak\Aurora-Sim\addon-modules\GlynnTucker.Cache\Modules\obj\Debug\ResolveAssemblyReference.cache
+D:\skidztweak\Aurora-Sim\addon-modules\GlynnTucker.Cache\Modules\obj\Debug\GlynnTucker.Cache.dll
+D:\skidztweak\Aurora-Sim\addon-modules\GlynnTucker.Cache\Modules\obj\Debug\GlynnTucker.Cache.pdb
