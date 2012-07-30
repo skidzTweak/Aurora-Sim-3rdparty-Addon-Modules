@@ -39,10 +39,10 @@ namespace OpenMetaverse
     {
         /// <summary>X value</summary>
         [FieldOffset(0)]
-            public float X;
+        public float X;
         /// <summary>Y value</summary>
         [FieldOffset(sizeof(float))]
-            public float Y;
+        public float Y;
 
         #region Constructors
 
@@ -158,12 +158,12 @@ namespace OpenMetaverse
 
         public float Length()
         {
-            return (float)Math.Sqrt(X * X + Y * Y);
+            return (float)Math.Sqrt(DistanceSquared(this, Zero));
         }
 
         public float LengthSquared()
         {
-            return  (X * X + Y * Y);
+            return DistanceSquared(this, Zero);
         }
 
         public void Normalize()
@@ -266,10 +266,10 @@ namespace OpenMetaverse
         public static Vector2 Normalize(Vector2 value)
         {
             const float MAG_THRESHOLD = 0.0000001f;
-            float factor = value.Length();
+            float factor = DistanceSquared(value, Zero);
             if (factor > MAG_THRESHOLD)
             {
-                factor = 1f / factor;
+                factor = 1f / (float)Math.Sqrt(factor);
                 value.X *= factor;
                 value.Y *= factor;
             }

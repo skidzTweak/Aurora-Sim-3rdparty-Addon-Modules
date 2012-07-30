@@ -197,11 +197,16 @@ namespace OpenMetaverse
         public float Priority;
         public Simulator Simulator;
         public AssetManager.AssetReceivedCallback Callback;
+
+        public int nextPacket;
+        public InternalDictionary<int, byte[]> outOfOrderPackets;
         internal ManualResetEvent HeaderReceivedEvent = new ManualResetEvent(false);
 
         public AssetDownload()
             : base()
         {
+            nextPacket = 0;
+            outOfOrderPackets = new InternalDictionary<int, byte[]>();
         }
     }
 
@@ -525,6 +530,20 @@ namespace OpenMetaverse
         /// <param name="callback">The callback to fire when the simulator responds with the asset data</param>
         public void RequestAsset(UUID assetID, AssetType type, bool priority, SourceType sourceType, UUID transactionID, AssetReceivedCallback callback)
         {
+            RequestAsset(assetID, UUID.Zero, UUID.Zero, type, priority, sourceType, transactionID, callback);
+        }
+
+        /// <summary>
+        /// Request an asset download
+        /// </summary>
+        /// <param name="assetID">Asset UUID</param>
+        /// <param name="type">Asset type, must be correct for the transfer to succeed</param>
+        /// <param name="priority">Whether to give this transfer an elevated priority</param>
+        /// <param name="sourceType">Source location of the requested asset</param>
+        /// <param name="transactionID">UUID of the transaction</param>
+        /// <param name="callback">The callback to fire when the simulator responds with the asset data</param>
+        public void RequestAsset(UUID assetID, UUID itemID, UUID taskID, AssetType type, bool priority, SourceType sourceType, UUID transactionID, AssetReceivedCallback callback)
+        {
             AssetDownload transfer = new AssetDownload();
             transfer.ID = transactionID;
             transfer.AssetID = assetID;
@@ -563,9 +582,16 @@ namespace OpenMetaverse
             request.TransferInfo.SourceType = (int)transfer.Source;
             request.TransferInfo.TransferID = transfer.ID;
 
-            byte[] paramField = new byte[20];
+            byte[] paramField = taskID == UUID.Zero ? new byte[20] : new byte[96];
             Buffer.BlockCopy(assetID.GetBytes(), 0, paramField, 0, 16);
             Buffer.BlockCopy(Utils.IntToBytes((int)type), 0, paramField, 16, 4);
+
+            if (taskID != UUID.Zero)
+            {
+                Buffer.BlockCopy(taskID.GetBytes(), 0, paramField, 48, 16);
+                Buffer.BlockCopy(itemID.GetBytes(), 0, paramField, 64, 16);
+                Buffer.BlockCopy(assetID.GetBytes(), 0, paramField, 80, 16);
+            }
             request.TransferInfo.Params = paramField;
 
             Client.Network.SendPacket(request, transfer.Simulator);
@@ -1226,7 +1252,7 @@ namespace OpenMetaverse
 
         #region Helpers
 
-        private Asset CreateAssetWrapper(AssetType type)
+        public Asset CreateAssetWrapper(AssetType type)
         {
             Asset asset;
 
@@ -1265,9 +1291,13 @@ namespace OpenMetaverse
                 case AssetType.Gesture:
                     asset = new AssetGesture();
                     break;
+                case AssetType.CallingCard:
+                    asset = new AssetCallingCard();
+                    break;
                 default:
-                    Logger.Log("Unimplemented asset type: " + type, Helpers.LogLevel.Error, Client);
-                    return null;
+                    asset = new AssetMutable(type);
+                    Logger.Log("Unimplemented asset type: " + type, Helpers.LogLevel.Error);
+                    break;
             }
 
             return asset;
@@ -1429,11 +1459,10 @@ namespace OpenMetaverse
         {
             TransferPacketPacket asset = (TransferPacketPacket)e.Packet;
             Transfer transfer;
-            AssetDownload download;
 
             if (Transfers.TryGetValue(asset.TransferData.TransferID, out transfer))
             {
-                download = (AssetDownload)transfer;
+                AssetDownload download = (AssetDownload)transfer;
 
                 if (download.Size == 0)
                 {
@@ -1467,13 +1496,25 @@ namespace OpenMetaverse
                     }
                 }
 
-                // This assumes that every transfer packet except the last one is exactly 1000 bytes,
-                // hopefully that is a safe assumption to make
+                // If packets arrive out of order, we add them to the out of order packet directory
+                // until all previous packets have arrived
                 try
                 {
-                    Buffer.BlockCopy(asset.TransferData.Data, 0, download.AssetData, 1000 * asset.TransferData.Packet,
-                        asset.TransferData.Data.Length);
-                    download.Transferred += asset.TransferData.Data.Length;
+                    if (download.nextPacket == asset.TransferData.Packet)
+                    {
+                        byte[] data = asset.TransferData.Data;
+                        do
+                        {
+                            Buffer.BlockCopy(data, 0, download.AssetData, download.Transferred, data.Length);
+                            download.Transferred += data.Length;
+                            download.nextPacket++;
+                        } while (download.outOfOrderPackets.TryGetValue(download.nextPacket, out data));
+                    }
+                    else
+                    {
+                        //Logger.Log(string.Format("Fixing out of order packet {0} when expecting {1}!", asset.TransferData.Packet, download.nextPacket), Helpers.LogLevel.Debug);
+                        download.outOfOrderPackets.Add(asset.TransferData.Packet, asset.TransferData.Data);
+                    }
                 }
                 catch (ArgumentException)
                 {

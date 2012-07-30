@@ -2355,7 +2355,7 @@ namespace OpenMetaverse
 
                     bool isNew;
                     lock (simulator.ObjectsPrimitives.Dictionary)
-                        isNew = simulator.ObjectsPrimitives.ContainsKey(LocalID);
+                        isNew = !simulator.ObjectsPrimitives.ContainsKey(LocalID);
 
                     Primitive prim = GetPrimitive(simulator, LocalID, FullID);
 
@@ -2580,18 +2580,27 @@ namespace OpenMetaverse
         {
             if (Client.Settings.ALWAYS_REQUEST_OBJECTS)
             {
+                bool cachedPrimitives = Client.Settings.CACHE_PRIMITIVES;
                 Packet packet = e.Packet;
                 Simulator simulator = e.Simulator;
 
                 ObjectUpdateCachedPacket update = (ObjectUpdateCachedPacket)packet;
                 List<uint> ids = new List<uint>(update.ObjectData.Length);
 
-                // No object caching implemented yet, so request updates for all of these objects
+                // Object caching is implemented when Client.Settings.PRIMITIVES_FACTORY is True, otherwise request updates for all of these objects
                 for (int i = 0; i < update.ObjectData.Length; i++)
                 {
-                    ids.Add(update.ObjectData[i].ID);
-                }
+                    uint localID = update.ObjectData[i].ID;
 
+                    if (cachedPrimitives)
+                    {
+                        if (!simulator.DataPool.NeedsRequest(localID))
+                        {
+                            continue;
+                        }
+                    }                        
+                    ids.Add(localID);
+                }               
                 RequestObjects(simulator, ids);
             }
         }
@@ -2681,6 +2690,10 @@ namespace OpenMetaverse
                     }
                 }
 
+                if (Client.Settings.CACHE_PRIMITIVES)
+                {
+                    simulator.DataPool.ReleasePrims(removePrims);
+                }
                 foreach (uint removeID in removePrims)
                     simulator.ObjectsPrimitives.Dictionary.Remove(removeID);
             }
@@ -2896,7 +2909,7 @@ namespace OpenMetaverse
                     prim.PathRevolutions = 1f;
                     break;
                 case PrimType.Prism:
-                    prim.ProfileCurve = ProfileCurve.Square;
+                    prim.ProfileCurve = ProfileCurve.EqualTriangle;
                     prim.PathCurve = PathCurve.Line;
                     prim.ProfileEnd = 1f;
                     prim.PathEnd = 1f;
@@ -3058,7 +3071,7 @@ namespace OpenMetaverse
 
         #region Object Tracking Link
 
-        /// <summary>
+                /// <summary>
         /// 
         /// </summary>
         /// <param name="simulator"></param>
@@ -3066,6 +3079,18 @@ namespace OpenMetaverse
         /// <param name="fullID"></param>
         /// <returns></returns>
         protected Primitive GetPrimitive(Simulator simulator, uint localID, UUID fullID)
+        {
+            return GetPrimitive(simulator, localID, fullID, true);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="simulator"></param>
+        /// <param name="localID"></param>
+        /// <param name="fullID"></param>
+        /// <param name="createIfMissing"></param>
+        /// <returns></returns>
+        public Primitive GetPrimitive(Simulator simulator, uint localID, UUID fullID, bool createIfMissing)
         {
             if (Client.Settings.OBJECT_TRACKING)
             {
@@ -3080,10 +3105,19 @@ namespace OpenMetaverse
                     }
                     else
                     {
-                        prim = new Primitive();
-                        prim.LocalID = localID;
+                        if (!createIfMissing) return null;
+                        if (Client.Settings.CACHE_PRIMITIVES)
+                        {
+                            prim = simulator.DataPool.MakePrimitive(localID);
+                        }
+                        else
+                        {
+                            prim = new Primitive();
+                            prim.LocalID = localID;
+                            prim.RegionHandle = simulator.Handle;
+                        }
+                        prim.ActiveClients++;
                         prim.ID = fullID;
-                        prim.RegionHandle = simulator.Handle;
 
                         simulator.ObjectsPrimitives.Dictionary[localID] = prim;
 
@@ -3401,8 +3435,8 @@ namespace OpenMetaverse
     /// </example>
     public class ObjectPropertiesEventArgs : EventArgs
     {
-        private readonly Simulator m_Simulator;
-        private readonly Primitive.ObjectProperties m_Properties;
+        protected readonly Simulator m_Simulator;
+        protected readonly Primitive.ObjectProperties m_Properties;
 
         /// <summary>Get the simulator the object is located</summary>
         public Simulator Simulator { get { return m_Simulator; } }
@@ -3428,19 +3462,13 @@ namespace OpenMetaverse
     /// <para>The <see cref="ObjectManager.ObjectPropertiesUpdated"/> event is also raised when a <see cref="ObjectManager.SelectObject"/> request is
     /// made and <see cref="Settings.OBJECT_TRACKING"/> is enabled</para>    
     /// </remarks>    
-    public class ObjectPropertiesUpdatedEventArgs : EventArgs
+    public class ObjectPropertiesUpdatedEventArgs : ObjectPropertiesEventArgs
     {
 
-        private readonly Simulator m_Simulator;
         private readonly Primitive m_Prim;
-        private readonly Primitive.ObjectProperties m_Properties;
 
-        /// <summary>Get the simulator the object is located</summary>
-        public Simulator Simulator { get { return m_Simulator; } }
         /// <summary>Get the primitive details</summary>
         public Primitive Prim { get { return m_Prim; } }
-        /// <summary>Get the primitive properties</summary>
-        public Primitive.ObjectProperties Properties { get { return m_Properties; } }
 
         /// <summary>
         /// Construct a new instance of the ObjectPropertiesUpdatedEvenrArgs class
@@ -3448,11 +3476,9 @@ namespace OpenMetaverse
         /// <param name="simulator">The simulator the object is located</param>
         /// <param name="prim">The Primitive</param>
         /// <param name="props">The primitive Properties</param>
-        public ObjectPropertiesUpdatedEventArgs(Simulator simulator, Primitive prim, Primitive.ObjectProperties props)
+        public ObjectPropertiesUpdatedEventArgs(Simulator simulator, Primitive prim, Primitive.ObjectProperties props) : base(simulator, props)
         {
-            this.m_Simulator = simulator;
             this.m_Prim = prim;
-            this.m_Properties = props;
         }
     }
 

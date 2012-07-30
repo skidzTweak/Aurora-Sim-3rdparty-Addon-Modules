@@ -32,6 +32,7 @@ using System.IO;
 using System.Net;
 using System.Xml;
 using System.Security.Cryptography.X509Certificates;
+using Nwc.XmlRpc;
 using OpenMetaverse.StructuredData;
 using OpenMetaverse.Http;
 using OpenMetaverse.Packets;
@@ -855,14 +856,14 @@ namespace OpenMetaverse
         /// <param name="firstName">Account first name</param>
         /// <param name="lastName">Account last name</param>
         /// <param name="password">Account password</param>
-        /// <param name="userAgent">Client application name</param>
-        /// <param name="userVersion">Client application version</param>
+        /// <param name="channel">Client application name (channel)</param>
+        /// <param name="version">Client application name + version</param>
         /// <returns>A populated <seealso cref="LoginParams"/> struct containing
         /// sane defaults</returns>
         public LoginParams DefaultLoginParams(string firstName, string lastName, string password,
-            string userAgent, string userVersion)
+            string channel, string version)
         {
-            return new LoginParams(Client, firstName, lastName, password, userAgent, userVersion);
+            return new LoginParams(Client, firstName, lastName, password, channel, version);
         }
 
         /// <summary>
@@ -871,14 +872,14 @@ namespace OpenMetaverse
         /// <param name="firstName">Account first name</param>
         /// <param name="lastName">Account last name</param>
         /// <param name="password">Account password</param>
-        /// <param name="userAgent">Client application name</param>
-        /// <param name="userVersion">Client application version</param>
+        /// <param name="channel">Client application name (channel)</param>
+        /// <param name="version">Client application name + version</param>
         /// <returns>Whether the login was successful or not. On failure the
         /// LoginErrorKey string will contain the error code and LoginMessage
         /// will contain a description of the error</returns>
-        public bool Login(string firstName, string lastName, string password, string userAgent, string userVersion)
+        public bool Login(string firstName, string lastName, string password, string channel, string version)
         {
-            return Login(firstName, lastName, password, userAgent, "last", userVersion);
+            return Login(firstName, lastName, password, channel, "last", version);
         }
 
         /// <summary>
@@ -890,17 +891,17 @@ namespace OpenMetaverse
         /// <param name="lastName">Account last name</param>
         /// <param name="password">Account password or MD5 hash of the password
         /// such as $1$1682a1e45e9f957dcdf0bb56eb43319c</param>
-        /// <param name="userAgent">Client application name</param>
+        /// <param name="channel">Client application name (channel)</param>
         /// <param name="start">Starting location URI that can be built with
         /// StartLocation()</param>
-        /// <param name="userVersion">Client application version</param>
+        /// <param name="version">Client application name + version</param>
         /// <returns>Whether the login was successful or not. On failure the
         /// LoginErrorKey string will contain the error code and LoginMessage
         /// will contain a description of the error</returns>
-        public bool Login(string firstName, string lastName, string password, string userAgent, string start,
-            string userVersion)
+        public bool Login(string firstName, string lastName, string password, string channel, string start,
+            string version)
         {
-            LoginParams loginParams = DefaultLoginParams(firstName, lastName, password, userAgent, userVersion);
+            LoginParams loginParams = DefaultLoginParams(firstName, lastName, password, channel, version);
             loginParams.Start = start;
 
             return Login(loginParams);
@@ -975,6 +976,22 @@ namespace OpenMetaverse
         {
             return String.Format("uri:{0}&{1}&{2}&{3}", sim, x, y, z);
         }
+        public void AbortLogin()
+        {
+            LoginParams loginParams = CurrentContext;
+            CurrentContext = null; // Will force any pending callbacks to bail out early
+            // FIXME: Now that we're using CAPS we could cancel the current login and start a new one
+            if (loginParams == null)
+            {
+                Logger.DebugLog("No Login was in progress: " + CurrentContext, Client);
+            }
+            else
+            {
+                InternalStatusCode = LoginStatus.Failed;
+                InternalLoginMessage = "Aborted";
+            }
+            UpdateLoginStatus(LoginStatus.Failed, "Abort Requested");
+        }
 
         #endregion
 
@@ -991,6 +1008,9 @@ namespace OpenMetaverse
 
             if (loginParams.Options == null)
                 loginParams.Options = new List<string>().ToArray();
+
+            if (loginParams.Password == null)
+                loginParams.Password = String.Empty;
 
             // Convert the password to MD5 if it isn't already
             if (loginParams.Password.Length != 35 && !loginParams.Password.StartsWith("$1$"))
@@ -1011,8 +1031,11 @@ namespace OpenMetaverse
             if (loginParams.MAC == null)
                 loginParams.MAC = String.Empty;
 
-            if (loginParams.Channel == null)
-                loginParams.Channel = String.Empty;
+            if (string.IsNullOrEmpty(loginParams.Channel))
+            {
+                Logger.Log("Viewer channel not set. This is a TOS violation on some grids.", Helpers.LogLevel.Warning);
+                loginParams.Channel = "libopenmetaverse generic client";
+            }
 
             if (loginParams.Author == null)
                 loginParams.Author = String.Empty;
@@ -1121,7 +1144,34 @@ namespace OpenMetaverse
                 }
                 loginXmlRpc["options"] = options;
 
-                
+                try
+                {
+                    ArrayList loginArray = new ArrayList(1);
+                    loginArray.Add(loginXmlRpc);
+                    XmlRpcRequest request = new XmlRpcRequest(CurrentContext.MethodName, loginArray);
+                    var cc = CurrentContext;
+                    // Start the request
+                    Thread requestThread = new Thread(
+                        delegate()
+                        {
+                            try
+                            {
+                                LoginReplyXmlRpcHandler(
+                                    request.Send(cc.URI, cc.Timeout),
+                                    loginParams);
+                            }
+                            catch (Exception e)
+                            {
+                                UpdateLoginStatus(LoginStatus.Failed, "Error opening the login server connection: " + e.Message);
+                            }
+                        });
+                    requestThread.Name = "XML-RPC Login";
+                    requestThread.Start();
+                }
+                catch (Exception e)
+                {
+                    UpdateLoginStatus(LoginStatus.Failed, "Error opening the login server connection: " + e);
+                }
 
                 #endregion
             }
@@ -1158,6 +1208,41 @@ namespace OpenMetaverse
 			CurrentContext = newContext;
 			LoginReplyXmlRpcHandler(response, newContext);
 		}
+
+
+        /// <summary>
+        /// Handles response from XML-RPC login replies
+        /// </summary>
+        private void LoginReplyXmlRpcHandler(XmlRpcResponse response, LoginParams context)
+        {
+            LoginResponseData reply = new LoginResponseData();
+            // Fetch the login response
+            if (response == null || !(response.Value is Hashtable))
+            {
+                UpdateLoginStatus(LoginStatus.Failed, "Invalid or missing login response from the server");
+                Logger.Log("Invalid or missing login response from the server", Helpers.LogLevel.Warning);
+                return;
+            }
+
+            try
+            {
+                reply.Parse((Hashtable)response.Value);
+                if (context.LoginID != CurrentContext.LoginID)
+                {
+                    Logger.Log("Login response does not match login request. Only one login can be attempted at a time",
+                        Helpers.LogLevel.Error);
+                    return;
+                }
+            }
+            catch (Exception e)
+            {
+                UpdateLoginStatus(LoginStatus.Failed, "Error retrieving the login response from the server: " + e.Message);
+                Logger.Log("Login response failure: " + e.Message + " " + e.StackTrace, Helpers.LogLevel.Warning);
+                return;
+            }
+			LoginReplyXmlRpcHandler(reply, context);
+		}
+
 
 		/// <summary>
 		/// Handles response from XML-RPC login replies with already parsed LoginResponseData

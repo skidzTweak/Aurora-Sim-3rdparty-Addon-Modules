@@ -100,8 +100,8 @@ namespace OpenMetaverse.StructuredData
         public virtual Vector3d AsVector3d() { return Vector3d.Zero; }
         public virtual Vector4 AsVector4() { return Vector4.Zero; }
         public virtual Quaternion AsQuaternion() { return Quaternion.Identity; }
-        public virtual Color4 AsColor4 () { return Color4.Black; }
-        public virtual OSD Copy () { return new OSD(); }
+        public virtual Color4 AsColor4() { return Color4.Black; }
+        public virtual OSD Copy() { return new OSD(); }
 
         public override string ToString() { return "undef"; }
 
@@ -290,17 +290,17 @@ namespace OpenMetaverse.StructuredData
                 else
                     return Quaternion.Identity;
             }
-            else if(type == typeof(OSDArray))
+            else if (type == typeof(OSDArray))
             {
                 OSDArray newArray = new OSDArray();
-                foreach(OSD o in (OSDArray)value)
+                foreach (OSD o in (OSDArray)value)
                     newArray.Add(o);
                 return newArray;
             }
-            else if(type == typeof(OSDMap))
+            else if (type == typeof(OSDMap))
             {
                 OSDMap newMap = new OSDMap();
-                foreach(KeyValuePair<string, OSD> o in (OSDMap)value)
+                foreach (KeyValuePair<string, OSD> o in (OSDMap)value)
                     newMap.Add(o);
                 return newMap;
             }
@@ -433,7 +433,7 @@ namespace OpenMetaverse.StructuredData
         public override double AsReal() { return value ? 1d : 0d; }
         public override string AsString() { return value ? "1" : "0"; }
         public override byte[] AsBinary() { return value ? trueBinary : falseBinary; }
-        public override OSD Copy () { return new OSDBoolean(value); }
+        public override OSD Copy() { return new OSDBoolean(value); }
 
         public override string ToString() { return AsString(); }
     }
@@ -459,8 +459,8 @@ namespace OpenMetaverse.StructuredData
         public override ulong AsULong() { return (ulong)value; }
         public override double AsReal() { return (double)value; }
         public override string AsString() { return value.ToString(); }
-        public override byte[] AsBinary () { return Utils.IntToBytesBig(value); }
-        public override OSD Copy () { return new OSDInteger(value); }
+        public override byte[] AsBinary() { return Utils.IntToBytesBig(value); }
+        public override OSD Copy() { return new OSDInteger(value); }
 
         public override string ToString() { return AsString(); }
     }
@@ -479,9 +479,9 @@ namespace OpenMetaverse.StructuredData
             this.value = value;
         }
 
-        public override bool AsBoolean () { return (!Double.IsNaN(value) && value != 0d); }
-        public override OSD Copy () { return new OSDReal(value); }
-        
+        public override bool AsBoolean() { return (!Double.IsNaN(value) && value != 0d); }
+        public override OSD Copy() { return new OSDReal(value); }
+       
         public override int AsInteger()
         {
             if (Double.IsNaN(value))
@@ -542,6 +542,8 @@ namespace OpenMetaverse.StructuredData
 
         public override OSDType Type { get { return OSDType.String; } }
 
+        public override OSD Copy() { return new OSDString(value); }
+
         public OSDString(string value)
         {
             // Refuse to hold null pointers
@@ -550,8 +552,6 @@ namespace OpenMetaverse.StructuredData
             else
                 this.value = String.Empty;
         }
-
-        public override OSD Copy () { return new OSDString(value); }
 
         public override bool AsBoolean()
         {
@@ -653,12 +653,12 @@ namespace OpenMetaverse.StructuredData
             this.value = value;
         }
 
+        public override OSD Copy() { return new OSDUUID(value); }
         public override bool AsBoolean() { return (value == UUID.Zero) ? false : true; }
         public override string AsString() { return value.ToString(); }
         public override UUID AsUUID() { return value; }
         public override byte[] AsBinary() { return value.GetBytes(); }
-        public override string ToString () { return AsString(); }
-        public override OSD Copy () { return new OSDUUID(value); }
+        public override string ToString() { return AsString(); }
     }
 
     /// <summary>
@@ -711,9 +711,9 @@ namespace OpenMetaverse.StructuredData
             return Utils.DoubleToBytes(ts.TotalSeconds);
         }
 
+        public override OSD Copy() { return new OSDDate(value); }
         public override DateTime AsDate() { return value; }
-        public override string ToString () { return AsString(); }
-        public override OSD Copy () { return new OSDDate(value); }
+        public override string ToString() { return AsString(); }
     }
 
     /// <summary>
@@ -742,10 +742,10 @@ namespace OpenMetaverse.StructuredData
             return string.Empty;
         }
 
+        public override OSD Copy() { return new OSDUri(value); }
         public override Uri AsUri() { return value; }
         public override byte[] AsBinary() { return Encoding.UTF8.GetBytes(AsString()); }
-        public override string ToString () { return AsString(); }
-        public override OSD Copy () { return new OSDUri(value); }
+        public override string ToString() { return AsString(); }
     }
 
     /// <summary>
@@ -769,10 +769,10 @@ namespace OpenMetaverse.StructuredData
         {
             this.value = new byte[]
             {
-                (byte)((value >> 24)),
-                (byte)((value >> 16)),
-                (byte)((value >> 8)),
-                (byte)(value)
+                (byte)((value >> 24) % 256),
+                (byte)((value >> 16) % 256),
+                (byte)((value >> 8) % 256),
+                (byte)(value % 256)
             };
         }
 
@@ -780,14 +780,14 @@ namespace OpenMetaverse.StructuredData
         {
             this.value = new byte[]
             {
-      (byte)((value >> 56)),
-                (byte)((value >> 48)),
-                (byte)((value >> 40)),
-                (byte)((value >> 32)),
-                (byte)((value >> 24)),
-                (byte)((value >> 16)),
-                (byte)((value >> 8)),
-                (byte)(value)
+                (byte)((value >> 56) % 256),
+                (byte)((value >> 48) % 256),
+                (byte)((value >> 40) % 256),
+                (byte)((value >> 32) % 256),
+                (byte)((value >> 24) % 256),
+                (byte)((value >> 16) % 256),
+                (byte)((value >> 8) % 256),
+                (byte)(value % 256)
             };
         }
 
@@ -795,20 +795,20 @@ namespace OpenMetaverse.StructuredData
         {
             this.value = new byte[]
             {
-     (byte)((value >> 56)),
-                (byte)((value >> 48)),
-                (byte)((value >> 40)),
-                (byte)((value >> 32)),
-                (byte)((value >> 24)),
-                (byte)((value >> 16)),
-                (byte)((value >> 8)),
-                (byte)(value)
+                (byte)((value >> 56) % 256),
+                (byte)((value >> 48) % 256),
+                (byte)((value >> 40) % 256),
+                (byte)((value >> 32) % 256),
+                (byte)((value >> 24) % 256),
+                (byte)((value >> 16) % 256),
+                (byte)((value >> 8) % 256),
+                (byte)(value % 256)
             };
         }
 
+        public override OSD Copy() { return new OSDBinary(value); }
         public override string AsString() { return Convert.ToBase64String(value); }
-        public override byte[] AsBinary () { return value; }
-        public override OSD Copy () { return new OSDBinary(value); }
+        public override byte[] AsBinary() { return value; }
 
         public override uint AsUInteger()
         {
@@ -883,6 +883,11 @@ namespace OpenMetaverse.StructuredData
         public override string ToString()
         {
             return OSDParser.SerializeJsonString(this, true);
+        }
+
+        public override OSD Copy()
+        {
+            return new OSDMap(new Dictionary<string, OSD>(value));
         }
 
         #region IDictionary Implementation
@@ -964,11 +969,6 @@ namespace OpenMetaverse.StructuredData
         IEnumerator IEnumerable.GetEnumerator()
         {
             return value.GetEnumerator();
-        }
-
-        public override OSD Copy ()
-        { 
-            return new OSDMap(new Dictionary<string, OSD>(value)); 
         }
 
         #endregion IDictionary Implementation
@@ -1115,12 +1115,12 @@ namespace OpenMetaverse.StructuredData
             return color;
         }
 
-        public override bool AsBoolean () { return value.Count > 0; }
-
-        public override OSD Copy ()
+        public override OSD Copy()
         {
             return new OSDArray(new List<OSD>(value));
         }
+
+        public override bool AsBoolean() { return value.Count > 0; }
 
         public override string ToString()
         {

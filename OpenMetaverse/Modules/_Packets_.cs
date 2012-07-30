@@ -67344,9 +67344,10 @@ namespace OpenMetaverse.Packets
             for (int j = 0; j < count; j++)
             { Data[j].FromBytes(bytes, ref i); }
             count = (int)bytes[i++];
-            if(Size == null || Size.Length != -1) {
+            if (Size == null || Size.Length != -1)
+            {
                 Size = new SizeBlock[count];
-                for(int j = 0; j < count; j++)
+                for (int j = 0; j < count; j++)
                 { Size[j] = new SizeBlock(); }
             }
             for (int j = 0; j < count; j++)
@@ -67372,9 +67373,10 @@ namespace OpenMetaverse.Packets
             for (int j = 0; j < count; j++)
             { Data[j].FromBytes(bytes, ref i); }
             count = (int)bytes[i++];
-            if(Size == null || Size.Length != count) {
+            if (Size == null || Size.Length != count)
+            {
                 Size = new SizeBlock[count];
-                for(int j = 0; j < count; j++)
+                for (int j = 0; j < count; j++)
                 { Size[j] = new SizeBlock(); }
             }
             for (int j = 0; j < count; j++)
@@ -67431,9 +67433,11 @@ namespace OpenMetaverse.Packets
                 int SizeCount = 0;
 
                 i = DataStart;
-                while (fixedLength + variableLength + acksLength < Packet.MTU && i < Data.Length) {
+                while (fixedLength + variableLength + acksLength < Packet.MTU && i < Data.Length)
+                {
                     int blockLength = Data[i].Length;
-                    if (fixedLength + variableLength + blockLength + acksLength <= MTU) {
+                    if (fixedLength + variableLength + blockLength + acksLength <= MTU)
+                    {
                         variableLength += blockLength;
                         ++DataCount;
                     }
@@ -67442,9 +67446,11 @@ namespace OpenMetaverse.Packets
                 }
 
                 i = SizeStart;
-                while (fixedLength + variableLength + acksLength < Packet.MTU && i < Size.Length) {
+                while (fixedLength + variableLength + acksLength < Packet.MTU && i < Size.Length)
+                {
                     int blockLength = Size[i].Length;
-                    if (fixedLength + variableLength + blockLength + acksLength <= MTU) {
+                    if (fixedLength + variableLength + blockLength + acksLength <= MTU)
+                    {
                         variableLength += blockLength;
                         ++SizeCount;
                     }
@@ -67465,7 +67471,8 @@ namespace OpenMetaverse.Packets
                 for (i = SizeStart; i < SizeStart + SizeCount; i++) { Size[i].ToBytes(packet, ref length); }
                 SizeStart += SizeCount;
 
-                if (acksLength > 0) {
+                if (acksLength > 0)
+                {
                     Buffer.BlockCopy(ackBytes, 0, packet, length, acksLength);
                     acksLength = 0;
                 }

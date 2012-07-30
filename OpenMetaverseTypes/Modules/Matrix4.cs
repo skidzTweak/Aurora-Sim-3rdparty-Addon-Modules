@@ -37,36 +37,36 @@ namespace OpenMetaverse
         public float M11;
         [FieldOffset(sizeof(float))]
         public float M12;
-        [FieldOffset(2*sizeof(float))]
+        [FieldOffset(2 * sizeof(float))]
         public float M13;
-        [FieldOffset(3*sizeof(float))]
+        [FieldOffset(3 * sizeof(float))]
         public float M14;
 
-        [FieldOffset(4*sizeof(float))]
+        [FieldOffset(4 * sizeof(float))]
         public float M21;
-        [FieldOffset(5*sizeof(float))]
+        [FieldOffset(5 * sizeof(float))]
         public float M22;
-        [FieldOffset(6*sizeof(float))]
+        [FieldOffset(6 * sizeof(float))]
         public float M23;
-        [FieldOffset(7*sizeof(float))]
+        [FieldOffset(7 * sizeof(float))]
         public float M24;
 
-        [FieldOffset(8*sizeof(float))]
+        [FieldOffset(8 * sizeof(float))]
         public float M31;
-        [FieldOffset(9*sizeof(float))]
+        [FieldOffset(9 * sizeof(float))]
         public float M32;
-        [FieldOffset(10*sizeof(float))]
+        [FieldOffset(10 * sizeof(float))]
         public float M33;
-        [FieldOffset(11*sizeof(float))]
+        [FieldOffset(11 * sizeof(float))]
         public float M34;
 
-        [FieldOffset(12*sizeof(float))]
+        [FieldOffset(12 * sizeof(float))]
         public float M41;
-        [FieldOffset(13*sizeof(float))]
+        [FieldOffset(13 * sizeof(float))]
         public float M42;
-        [FieldOffset(14*sizeof(float))]
+        [FieldOffset(14 * sizeof(float))]
         public float M43;
-        [FieldOffset(15*sizeof(float))]
+        [FieldOffset(15 * sizeof(float))]
         public float M44;
 
         #region Properties
@@ -940,11 +940,10 @@ namespace OpenMetaverse
 
         public static Matrix4 Inverse(Matrix4 matrix)
         {
-            float det = matrix.Determinant();
-            if ( det == 0f)
+            if (matrix.Determinant() == 0f)
                 throw new ArgumentException("Singular matrix inverse not possible");
 
-            return (Adjoint(matrix) / det);
+            return (Adjoint(matrix) / matrix.Determinant());
         }
 
         public static Matrix4 Adjoint(Matrix4 matrix)
